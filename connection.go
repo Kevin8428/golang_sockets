@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -34,9 +35,10 @@ func (c *connection) reader(wg *sync.WaitGroup, wsConn *websocket.Conn) {
 }
 
 func loadPreviousMessages(wsConn *websocket.Conn) {
-	_ = wsConn.WriteMessage(websocket.TextMessage, previousMessages[0])
-	_ = wsConn.WriteMessage(websocket.TextMessage, previousMessages[1])
-	_ = wsConn.WriteMessage(websocket.TextMessage, previousMessages[2])
+	fmt.Println("previousMessages address: ", &previousMessages[0])
+	for _, message := range previousMessages {
+		_ = wsConn.WriteMessage(websocket.TextMessage, message)
+	}
 }
 
 func (c *connection) writer(wg *sync.WaitGroup, wsConn *websocket.Conn) {
@@ -46,6 +48,7 @@ func (c *connection) writer(wg *sync.WaitGroup, wsConn *websocket.Conn) {
 		if err != nil {
 			break
 		}
+		// append to previous messages here
 	}
 }
 
@@ -65,7 +68,7 @@ func (wsh wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.h.addConnection(c)
 	defer c.h.removeConnection(c)
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(2)
 	loadPreviousMessages(wsConn)
 	go c.writer(&wg, wsConn)
 	go c.reader(&wg, wsConn)
