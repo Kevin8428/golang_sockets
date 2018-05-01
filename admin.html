@@ -57,7 +57,8 @@
 
       // render socket messages to page and scroll
       function appendToAdmin(hostMessage) {
-        hostMessage.appendTo(adminLog)
+        console.log("appending message " + hostMessage + "to log " + adminLog);
+        hostMessage.appendTo(adminLog[0]);
       }
 
       $("#show_host_form").submit(function() {
@@ -71,6 +72,7 @@
         }
         adminConn.send(hostMessage.val());
         hostMessage.val("");
+        console.log('submitting')
         return false
       });
 
@@ -81,7 +83,8 @@
               appendToAdmin($("<div><b>Admin connection closed.<\/b><\/div>"))
           }
           adminConn.onmessage = function(evt) {
-              hostMessage.appendTo($("<div/>").text(evt.data));
+            console.log("received message");
+            appendToAdmin($("<div/>").text(evt.data))              
           }
       } else {
           appendToAdmin($("<div><b>Your browser does not support WebSockets.<\/b><\/div>"))
