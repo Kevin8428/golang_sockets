@@ -58,11 +58,11 @@ func (c *connection) writer(wg *sync.WaitGroup, wsConn *websocket.Conn) {
 
 var upgrader = &websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 
-type wsHandler struct {
+type customerWSHandler struct {
 	h *hub
 }
 
-func (wsh wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (wsh customerWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("error upgrading %s", err)
