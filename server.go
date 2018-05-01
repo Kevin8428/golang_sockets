@@ -23,7 +23,7 @@ func main() {
 	router.Handle("/", homeHandler(tpl))
 	router.Handle("/ws", wsHandler{h: h})
 	router.Handle("/admin", homeHandler(admin))
-	router.Handle("/admin_ws", wsHandler{h: h})
+	router.Handle("/admin_ws", adminWSHandler{h: h})
 	router.Handle("/host", homeHandler(host))
 	log.Printf("serving on port 8081")
 	log.Fatal(http.ListenAndServe(":8081", router))

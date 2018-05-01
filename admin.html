@@ -8,76 +8,87 @@
     //////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////// CHAT WEBSOCKET /////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////
-    $(function() {    
-    var conn;
-    var msg = $("#msg");
-    var log = $("#log");
+    $(function() {
 
-    // render socket messages to page and scroll
-    function appendLog(msg) {
-        var d = log[0]
-        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
-        msg.appendTo(log)
-        if (doScroll) {
-            d.scrollTop = d.scrollHeight - d.clientHeight;
-        }
-    }
+      var conn;
+      var msg = $("#msg");
+      var log = $("#log");
 
-    // create chat connection and render messages to page
-    if (window["WebSocket"]) {
-        conn = new WebSocket("ws://localhost:8081/ws");
-        conn.onclose = function(evt) {
-            appendLog($("<div><b>Connection closed.<\/b><\/div>"))
-        }
-        conn.onmessage = function(evt) {
-            appendLog($("<div/>").text(evt.data))
-        }
-    } else {
-        appendLog($("<div><b>Your browser does not support WebSockets.<\/b><\/div>"))
-    }
-    });
+      function appendLog(msg) {
+          var d = log[0]
+          var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+          msg.appendTo(log)
+          if (doScroll) {
+              d.scrollTop = d.scrollHeight - d.clientHeight;
+          }
+      }
 
-    // submit new message
-    $("#form").submit(function() {
-    if (!conn) {
-        return false;
-    }
-    if (!msg.val()) {
-        return false;
-    }
-    conn.send(msg.val());
-    msg.val("");
-    return false
-    });
+      $("#form").submit(function() {
+          if (!conn) {
+              return false;
+          }
+          if (!msg.val()) {
+              return false;
+          }
+          conn.send(msg.val());
+          msg.val("");
+          return false
+      });
 
+      if (window["WebSocket"]) {
+          conn = new WebSocket("ws://localhost:8081/ws");
+          conn.onclose = function(evt) {
+              appendLog($("<div><b>Connection closed.<\/b><\/div>"))
+          }
+          conn.onmessage = function(evt) {
+              appendLog($("<div/>").text(evt.data))
+          }
+      } else {
+          appendLog($("<div><b>Your browser does not support WebSockets.<\/b><\/div>"))
+      }
+      });
     //////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////// ADMIN WEBSOCKET ////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////
     $(function() {
-    var adminConn;
-    var hostMessage = $("#msg_for_host");
+      var adminConn;
+      var hostMessage = $("#msg_for_host");
 
-    // render socket messages to page and scroll
-    function appendLog(hostMessage) {
-        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
-        
-        if (doScroll) {
-            d.scrollTop = d.scrollHeight - d.clientHeight;
-        }
-    }
+      // render socket messages to page and scroll
+      function appendToAdmin(hostMessage) {
+          var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+          
+          if (doScroll) {
+              d.scrollTop = d.scrollHeight - d.clientHeight;
+          }
+      }
 
-    // create chat connection and render messages to page
-    if (window["WebSocket"]) {
-        adminConn = new WebSocket("ws://localhost:8081/admin_ws");
-        adminConn.onclose = function(evt) {
-            appendLog($("<div><b>Admin connection closed.<\/b><\/div>"))
-        }
-        adminConn.onmessage = function(evt) {
-            hostMessage.appendTo($("<div/>").text(evt.data));
-        }
-    } else {
-        appendLog($("<div><b>Your browser does not support WebSockets.<\/b><\/div>"))
-    }
+      // create chat connection and render messages to page
+      if (window["WebSocket"]) {
+          adminConn = new WebSocket("ws://localhost:8081/admin_ws");
+          adminConn.onclose = function(evt) {
+              appendToAdmin($("<div><b>Admin connection closed.<\/b><\/div>"))
+          }
+          adminConn.onmessage = function(evt) {
+              hostMessage.appendTo($("<div/>").text(evt.data));
+          }
+      } else {
+          appendToAdmin($("<div><b>Your browser does not support WebSockets.<\/b><\/div>"))
+      }
+    });
+
+    $("#show_host_form").submit(function() {
+      if (!adminConn) {
+        console.log("no connection")
+        return false;
+      }
+      if (!hostMessage.val()) {
+        console.log("no hostMessage")
+        return false;
+      }
+      adminConn.send(hostMessage.val());
+      hostMessage.val("ready");
+      return false
     });
     </script>
     <style type="text/css">
@@ -136,15 +147,15 @@
     <div class="section-wrapper left">
       <div id="log"></div>
       <form id="form" name="form">
-          <input type="submit" value="Send"> <input id="msg" size="64" type=
-          "text">
+          <input type="submit" value="Send"> 
+          <input id="msg" size="64" type="text">
       </form>
     </div>
     <div class="section-wrapper right">
       <div id="admin_log"></div>
       <form id="show_host_form" name="host_form">
-          <input type="submit" value="Send"> <input id="msg_for_host" size="64" type=
-          "text">
+          <input type="submit" value="Send"> 
+          <input id="msg_for_host" size="64" type="text" value"foo">
       </form>
     </div>
   </div>

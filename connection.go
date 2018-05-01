@@ -35,7 +35,6 @@ func (c *connection) reader(wg *sync.WaitGroup, wsConn *websocket.Conn) {
 }
 
 func loadPreviousMessages(wsConn *websocket.Conn) {
-	fmt.Println("previousMessages address: ", &previousMessages[0])
 	for _, message := range previousMessages {
 		_ = wsConn.WriteMessage(websocket.TextMessage, message)
 	}
@@ -44,6 +43,7 @@ func loadPreviousMessages(wsConn *websocket.Conn) {
 func (c *connection) writer(wg *sync.WaitGroup, wsConn *websocket.Conn) {
 	defer wg.Done()
 	for message := range c.send { // listening to send channel
+		fmt.Println("one message being sent")
 		err := wsConn.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
 			break
@@ -70,6 +70,27 @@ func (wsh wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	loadPreviousMessages(wsConn)
+	go c.writer(&wg, wsConn)
+	go c.reader(&wg, wsConn)
+	wg.Wait()
+	wsConn.Close()
+}
+
+type adminWSHandler struct {
+	h *hub
+}
+
+func (wsh adminWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("error upgrading %s", err)
+		return
+	}
+	c := &connection{send: make(chan []byte, 256), h: wsh.h}
+	c.h.addConnection(c)
+	defer c.h.removeConnection(c)
+	var wg sync.WaitGroup
+	wg.Add(2)
 	go c.writer(&wg, wsConn)
 	go c.reader(&wg, wsConn)
 	wg.Wait()
