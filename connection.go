@@ -23,14 +23,19 @@ var previousMessages = [][]byte{
 	[]byte{121, 111},
 }
 
-func (c *connection) reader(wg *sync.WaitGroup, wsConn *websocket.Conn) {
+func (c *connection) reader(wg *sync.WaitGroup, wsConn *websocket.Conn, isAdmin bool) {
 	defer wg.Done()
 	for {
 		_, message, err := wsConn.ReadMessage()
 		if err != nil {
 			break
 		}
-		c.h.broadcast <- message
+		fmt.Println("reading!")
+		if isAdmin {
+			c.h.adminChan <- message
+		} else {
+			c.h.broadcast <- message
+		}
 	}
 }
 
@@ -48,7 +53,6 @@ func (c *connection) writer(wg *sync.WaitGroup, wsConn *websocket.Conn) {
 		if err != nil {
 			break
 		}
-		// append to previous messages here
 	}
 }
 
@@ -71,7 +75,7 @@ func (wsh wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wg.Add(2)
 	loadPreviousMessages(wsConn)
 	go c.writer(&wg, wsConn)
-	go c.reader(&wg, wsConn)
+	go c.reader(&wg, wsConn, false)
 	wg.Wait()
 	wsConn.Close()
 }
@@ -87,12 +91,12 @@ func (wsh adminWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := &connection{send: make(chan []byte, 256), h: wsh.h}
-	c.h.addConnection(c)
-	defer c.h.removeConnection(c)
+	c.h.addHostConnection(c)
+	defer c.h.removeHostConnection(c)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go c.writer(&wg, wsConn)
-	go c.reader(&wg, wsConn)
+	go c.reader(&wg, wsConn, true)
 	wg.Wait()
 	wsConn.Close()
 }
