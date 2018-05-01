@@ -27,7 +27,6 @@ var initHost = function() {
   }
 };
 
-
 var initAdmin = function() {
   var conn,
   msg = document.getElementById('submit-message'),
@@ -117,8 +116,52 @@ var initAdmin = function() {
     var comment = document.createElement('div');
     comment.innerHTML = '<b>browser does not support websockets.<\/b>';
     appendToAdmin(comment)
+  }  
+}
+
+var initCustomerPage = function() {
+  var conn,
+  msg = document.getElementById('submit-message'),
+  log = document.getElementById('all-messages');
+
+  function appendToChat(msg) {
+    log.appendChild(msg)
+  }
+
+  document.getElementById('submit-message-form').addEventListener('submit', function(e){
+    e.preventDefault();
+      if (!conn) {
+        console.log("no connection")
+        return false;
+      }
+      if (!msg.value) {
+        console.log("no value")
+        return false;
+      }
+      conn.send(msg.value);
+      msg.value = "";
+      return false
+  });
+
+  if (window["WebSocket"]) {
+    conn = new WebSocket("ws://localhost:8081/customer_ws");
+    conn.onclose = function(evt) {
+      var comment = document.createElement('div');
+      comment.innerHTML = '<b>Connection closed.<\/b>';
+      appendToChat(comment)
+    }
+    conn.onmessage = function(evt) {
+      var comment = document.createElement('div');
+      comment.innerHTML = evt.data;
+      appendToChat(comment)
+    }
+  } else {
+    var comment = document.createElement('div');
+    comment.innerHTML = '<b>Your browser does not support WebSockets.<\/b>';
+    appendToChat(comment)
   }
 }
+
 window.onload = function(){
   var isAdminPage = document.getElementById('admin-log') != null
   var isHostPage = document.getElementById('host-questions') != null
@@ -128,6 +171,6 @@ window.onload = function(){
   } else if (isHostPage) {
     initHost();
   } else {
-
+    initCustomerPage()
   }
 }
